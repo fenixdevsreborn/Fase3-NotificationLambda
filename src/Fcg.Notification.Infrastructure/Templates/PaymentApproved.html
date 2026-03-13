@@ -1,0 +1,128 @@
+<!--
+  TEMPLATE : PaymentApproved (conteúdo = purchase-confirmation do FCG.Notification.Infrastructure)
+  Placeholders: playerName, gameTitle, orderId, purchaseDate, totalAmount, libraryUrl
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Compra Confirmada - FCG</title>
+</head>
+
+<body style="margin:0;padding:0;background-color:#0d1117;font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
+
+  <!-- Wrapper -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+    style="background-color:#0d1117;min-height:100vh;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+
+        <!-- Card -->
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0"
+          style="width:100%;max-width:600px;background-color:#161b22;border-radius:12px;border:1px solid #21262d;overflow:hidden;">
+
+          <!-- ========== HEADER ========== -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#ff6200 0%,#e05500 100%);padding:36px 40px;text-align:center;">
+              <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:800;letter-spacing:-0.5px;">FCG</h1>
+              <p
+                style="margin:4px 0 0 0;color:rgba(255,255,255,0.80);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;">
+                Fiap Cloud Games</p>
+            </td>
+          </tr>
+
+          <!-- ========== SUCCESS BADGE ========== -->
+          <tr>
+            <td style="padding:40px 40px 0 40px;text-align:center;">
+              <div
+                style="display:inline-block;width:72px;height:72px;background-color:#14532d;border-radius:50%;text-align:center;line-height:72px;font-size:32px;border:2px solid #16a34a;">
+                &#10003;</div>
+              <h2 style="margin:20px 0 8px 0;color:#ffffff;font-size:22px;font-weight:700;">Compra Confirmada!</h2>
+              <p style="margin:0;color:#8b949e;font-size:15px;line-height:1.7;">
+                Obrigado pela sua compra, <strong style="color:#ffffff;">{{playerName}}</strong>!<br>
+                Seu jogo já está disponível na sua biblioteca.
+              </p>
+            </td>
+          </tr>
+
+          <!-- ========== ORDER DETAILS ========== -->
+          <tr>
+            <td style="padding:32px 40px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+                style="background-color:#1f2937;border-radius:10px;overflow:hidden;border:1px solid #374151;">
+                <tr>
+                  <td colspan="2" style="padding:14px 20px;background-color:#374151;">
+                    <p
+                      style="margin:0;color:#9ca3af;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;">
+                      Detalhes do Pedido</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 20px;border-bottom:1px solid #374151;color:#8b949e;font-size:13px;width:40%;">
+                    Jogo</td>
+                  <td
+                    style="padding:14px 20px;border-bottom:1px solid #374151;color:#ffffff;font-size:14px;font-weight:600;">
+                    {{gameTitle}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 20px;border-bottom:1px solid #374151;color:#8b949e;font-size:13px;">Pedido nº
+                  </td>
+                  <td
+                    style="padding:14px 20px;border-bottom:1px solid #374151;color:#ffffff;font-size:13px;font-family:monospace;">
+                    {{orderId}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 20px;border-bottom:1px solid #374151;color:#8b949e;font-size:13px;">Data</td>
+                  <td style="padding:14px 20px;border-bottom:1px solid #374151;color:#ffffff;font-size:13px;">
+                    {{purchaseDate}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 20px;color:#8b949e;font-size:13px;">Total pago</td>
+                  <td style="padding:14px 20px;color:#ff6200;font-size:16px;font-weight:700;">{{totalAmount}}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- ========== CTA ========== -->
+          <tr>
+            <td style="padding:0 40px 40px 40px;text-align:center;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="border-radius:8px;" bgcolor="#ff6200">
+                    <a href="{{libraryUrl}}"
+                      style="display:inline-block;padding:14px 40px;background-color:#ff6200;color:#ffffff;text-decoration:none;border-radius:8px;font-size:15px;font-weight:700;">
+                      &#127918;&nbsp; Jogar agora
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- ========== FOOTER ========== -->
+          <tr>
+            <td style="background-color:#0d1117;padding:24px 40px;text-align:center;border-top:1px solid #21262d;">
+              <p style="margin:0 0 4px 0;color:#484f58;font-size:12px;">
+                &copy; 2026 Fiap Cloud Games &mdash; Todos os direitos reservados.
+              </p>
+              <p style="margin:0;color:#484f58;font-size:11px;">
+                Dúvidas? Entre em contato com nosso suporte.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+        <!-- /Card -->
+
+      </td>
+    </tr>
+  </table>
+  <!-- /Wrapper -->
+
+</body>
+
+</html>

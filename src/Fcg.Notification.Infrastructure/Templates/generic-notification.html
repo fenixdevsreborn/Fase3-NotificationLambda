@@ -1,0 +1,65 @@
+<!--
+  TEMPLATE : generic-notification (origem FCG.Notification.Infrastructure/Templates/Templates)
+  Placeholders: title, message
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>{{title}} - FCG</title>
+</head>
+
+<body style="margin:0;padding:0;background-color:#0d1117;font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
+
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+    style="background-color:#0d1117;min-height:100vh;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0"
+          style="width:100%;max-width:600px;background-color:#161b22;border-radius:12px;border:1px solid #21262d;overflow:hidden;">
+
+          <tr>
+            <td style="background:linear-gradient(135deg,#ff6200 0%,#e05500 100%);padding:28px 40px;text-align:center;">
+              <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:800;letter-spacing:-0.5px;">FCG</h1>
+              <p
+                style="margin:4px 0 0 0;color:rgba(255,255,255,0.80);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;">
+                Fiap Cloud Games</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:36px 40px 0 40px;">
+              <h2 style="margin:0 0 16px 0;color:#ffffff;font-size:20px;font-weight:700;line-height:1.4;">{{title}}</h2>
+              <hr
+                style="border:none;border-top:2px solid #ff6200;width:40px;margin:0 0 24px 0;text-align:left;display:block;">
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:0 40px 40px 40px;">
+              <div style="color:#8b949e;font-size:15px;line-height:1.8;">{{message}}</div>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background-color:#0d1117;padding:24px 40px;text-align:center;border-top:1px solid #21262d;">
+              <p style="margin:0 0 4px 0;color:#484f58;font-size:12px;">
+                &copy; 2026 Fiap Cloud Games &mdash; Todos os direitos reservados.
+              </p>
+              <p style="margin:0;color:#484f58;font-size:11px;">
+                Você recebeu esta notificação porque possui uma conta ativa na Fiap Cloud Games (FCG).
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+
+</html>

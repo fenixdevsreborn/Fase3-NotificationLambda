@@ -1,0 +1,44 @@
+# ------------------------------------------------------------------------------
+# CI — Notification Lambda (FCG Cloud Platform)
+# Restore, build (Release) e testes. Use na raiz do repositório deste projeto.
+# ------------------------------------------------------------------------------
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  DOTNET_VERSION: "10.0.x"
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore tests/Fcg.Notification.UnitTests/Fcg.Notification.UnitTests.csproj
+
+      - name: Build (Release)
+        run: dotnet build tests/Fcg.Notification.UnitTests/Fcg.Notification.UnitTests.csproj -c Release --no-restore
+
+      - name: Test (Release)
+        run: dotnet test tests/Fcg.Notification.UnitTests/Fcg.Notification.UnitTests.csproj -c Release --no-build --verbosity normal --logger "trx;LogFileName=results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "**/TestResults/*.trx"

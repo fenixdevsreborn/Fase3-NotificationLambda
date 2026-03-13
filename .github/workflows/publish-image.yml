@@ -1,0 +1,77 @@
+# ------------------------------------------------------------------------------
+# Publicar imagem Docker no ECR e disparar Fase3-InfraOrchestrador.
+# Use quando este projeto for a raiz do repositório. Serviço: notification-lambda.
+# ------------------------------------------------------------------------------
+
+name: Publish image
+
+on:
+  push:
+    branches: [main]
+
+env:
+  SERVICE_NAME: notification-lambda
+  DOTNET_VERSION: "10.0.x"
+
+jobs:
+  build-and-push:
+    name: Build & Push to ECR
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    outputs:
+      image_uri: ${{ steps.meta.outputs.tags }}
+      image_tag: ${{ steps.meta.outputs.sha_tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_ECR }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Docker meta (tags)
+        id: meta
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          echo "tags=${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_NAME }}:${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "sha_tag=${SHORT_SHA}" >> $GITHUB_OUTPUT
+
+      - name: Build image
+        run: docker build -f Dockerfile -t ${{ steps.meta.outputs.tags }} .
+
+      - name: Push image
+        run: docker push ${{ steps.meta.outputs.tags }}
+
+      - name: Push latest (production)
+        if: vars.ENVIRONMENT == 'prod'
+        run: |
+          docker tag ${{ steps.meta.outputs.tags }} ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_NAME }}:latest
+          docker push ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_NAME }}:latest
+
+  trigger-orchestrator:
+    name: Trigger infra orchestrator
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Fase3-InfraOrchestrador
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.ORCHESTRATOR_REPO_TOKEN }}
+          repository: ${{ vars.ORCHESTRATOR_REPO }}
+          event-type: deploy-request
+          client-payload: |
+            {
+              "service_name": "${{ env.SERVICE_NAME }}",
+              "image_tag": "${{ needs.build-and-push.outputs.image_tag }}",
+              "commit_sha": "${{ github.sha }}",
+              "environment": "${{ vars.ENVIRONMENT }}"
+            }
