@@ -4,7 +4,7 @@ using Amazon.Lambda.Core;
 using Amazon.Lambda.SQSEvents;
 using Fcg.Notification.Application.Abstractions;
 using Fcg.Notification.Contracts.Messages;
-using Fcg.Shared.Observability;
+using Fcg.Notification.Lambda.Observability;
 using Microsoft.Extensions.Logging;
 
 namespace Fcg.Notification.Lambda;
@@ -15,7 +15,7 @@ public sealed class Function
     private readonly ILogger<Function> _logger;
     private readonly FcgMeters _meters;
 
-    /// <summary>Número de recepções após o qual a mensagem é considerada poison (não retentar).</summary>
+    /// <summary>Receive count after which the message is considered poison (do not retry).</summary>
     private const int PoisonReceiveCountThreshold = 4;
 
     public Function(INotificationHandler handler, ILogger<Function> logger, FcgMeters meters)
@@ -25,7 +25,7 @@ public sealed class Function
         _meters = meters;
     }
 
-    /// <summary>Handler principal: processa lote SQS, retorna falhas para retry e trata poison messages.</summary>
+    /// <summary>Main handler: processes SQS batch, returns failures for retry, handles poison messages.</summary>
     public async Task<SQSBatchResponse> HandleSqsAsync(SQSEvent evnt, ILambdaContext context)
     {
         var batchFailures = new List<SQSBatchResponse.BatchItemFailure>();
@@ -39,8 +39,9 @@ public sealed class Function
             if (isPoison)
             {
                 _logger.LogError(
-                    "Poison message discarded: MessageId={SqsMessageId}, ReceiveCount={ReceiveCount}, BodyLength={BodyLength}",
+                    "Poison message discarded. {MessageId} {ReceiveCount} {BodyLength}",
                     record.MessageId, receiveCount, record.Body?.Length ?? 0);
+                _meters.RecordException("PoisonMessageDiscarded");
                 continue;
             }
 
@@ -51,14 +52,15 @@ public sealed class Function
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to parse SQS body. MessageId={MessageId}", record.MessageId);
+                _logger.LogError(ex, "Failed to parse SQS body. {MessageId}", record.MessageId);
+                _meters.RecordException(ex.GetType().Name);
                 batchFailures.Add(new SQSBatchResponse.BatchItemFailure { ItemIdentifier = record.MessageId });
                 continue;
             }
 
             if (message is null)
             {
-                _logger.LogWarning("SQS body could not be parsed as NotificationMessage. MessageId={MessageId}", record.MessageId);
+                _logger.LogWarning("SQS body could not be parsed as NotificationMessage. {MessageId}", record.MessageId);
                 batchFailures.Add(new SQSBatchResponse.BatchItemFailure { ItemIdentifier = record.MessageId });
                 continue;
             }
@@ -67,12 +69,24 @@ public sealed class Function
                 message.MessageId = record.MessageId;
 
             var itemSw = Stopwatch.StartNew();
-            var result = await ActivityRunContext.RunWithActivityAsync(
-                message.TraceId,
-                null,
-                message.CorrelationId,
-                "notification.handle",
-                () => _handler.HandleAsync(message, CancellationToken.None)).ConfigureAwait(false);
+            NotificationResult result;
+            try
+            {
+                result = await ActivityRunContext.RunWithActivityAsync(
+                    message.TraceId,
+                    null,
+                    message.CorrelationId,
+                    "notification.handle",
+                    () => _handler.HandleAsync(message, CancellationToken.None)).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler threw. {MessageId} {TraceId} {CorrelationId}", message.MessageId, message.TraceId, message.CorrelationId);
+                _meters.RecordException(ex.GetType().Name);
+                _meters.RecordEmailFailed();
+                batchFailures.Add(new SQSBatchResponse.BatchItemFailure { ItemIdentifier = record.MessageId });
+                continue;
+            }
             itemSw.Stop();
 
             if (result.Status == NotificationResultStatus.Sent)
@@ -81,19 +95,20 @@ public sealed class Function
                 _meters.RecordEmailFailed();
 
             _logger.LogInformation(
-                "NotificationProcessed MessageId={MessageId} TemplateName={TemplateName} Status={Status} DurationMs={DurationMs} CorrelationId={CorrelationId}",
-                message.MessageId, message.TemplateName, result.Status, itemSw.ElapsedMilliseconds, message.CorrelationId ?? "");
+                "NotificationProcessed {MessageId} {TemplateName} {Status} {DurationMs} {CorrelationId} {TraceId}",
+                message.MessageId, message.TemplateName, result.Status, itemSw.ElapsedMilliseconds,
+                message.CorrelationId ?? "", message.TraceId ?? "");
 
             var retriable = IsRetriable(result);
             if (!retriable && result.Status != NotificationResultStatus.Sent && result.Status != NotificationResultStatus.SkippedDuplicate)
-                _logger.LogWarning("Non-retriable result: Status={Status}, Error={Error}", result.Status, result.ErrorMessage);
+                _logger.LogWarning("Non-retriable result. {Status} {Error}", result.Status, result.ErrorMessage);
 
             if (retriable)
                 batchFailures.Add(new SQSBatchResponse.BatchItemFailure { ItemIdentifier = record.MessageId });
         }
 
         sw.Stop();
-        _logger.LogInformation("Batch completed in {TotalMs}ms, Failures={FailureCount}", sw.ElapsedMilliseconds, batchFailures.Count);
+        _logger.LogInformation("Batch completed. {TotalMs}ms {FailureCount} failures", sw.ElapsedMilliseconds, batchFailures.Count);
         return new SQSBatchResponse(batchFailures);
     }
 

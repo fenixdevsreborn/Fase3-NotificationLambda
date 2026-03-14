@@ -20,6 +20,5 @@
     <ProjectReference Include="..\Fcg.Notification.Application\Fcg.Notification.Application.csproj" />
     <ProjectReference Include="..\Fcg.Notification.Infrastructure\Fcg.Notification.Infrastructure.csproj" />
     <ProjectReference Include="..\Fcg.Notification.Contracts\Fcg.Notification.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\Fase3-Shared\src\Fcg.Shared.Observability\Fcg.Shared.Observability.csproj" />
   </ItemGroup>
 </Project>

@@ -3,8 +3,9 @@ using Amazon.Lambda.RuntimeSupport;
 using Amazon.Lambda.Serialization.SystemTextJson;
 using Fcg.Notification.Application.Extensions;
 using Fcg.Notification.Infrastructure.Extensions;
-using Fcg.Shared.Observability;
+using Fcg.Notification.Lambda.Extensions;
 using Microsoft.Extensions.Configuration;
+using Function = Fcg.Notification.Lambda.Function;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -20,13 +21,13 @@ services.AddLogging(builder =>
     builder.AddConfiguration(configuration.GetSection("Logging"));
     builder.AddConsole();
 });
-services.AddSingleton(new FcgMeters("Fcg.Notification.Lambda"));
+services.AddLambdaObservability();
 services.AddNotificationInfrastructure(configuration);
 services.AddNotificationApplication();
-services.AddSingleton<Fcg.Notification.Lambda.Function>();
+services.AddSingleton<Function>();
 
 var provider = services.BuildServiceProvider();
-var handler = provider.GetRequiredService<Fcg.Notification.Lambda.Function>();
+var handler = provider.GetRequiredService<Function>();
 var serializer = new DefaultLambdaJsonSerializer(options =>
 {
     options.PropertyNameCaseInsensitive = true;
