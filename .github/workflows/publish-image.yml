@@ -23,7 +23,7 @@ jobs:
       contents: read
     outputs:
       image_uri: ${{ steps.meta.outputs.tags }}
-      image_tag: ${{ steps.meta.outputs.sha_tag }}
+      image_tag: ${{ steps.meta.outputs.image_tag }}
 
     steps:
       - name: Checkout
@@ -42,22 +42,16 @@ jobs:
       - name: Docker meta (tags)
         id: meta
         run: |
-          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          ECR_REPO="${{ vars.ECR_REPOSITORY_NAME || 'fcg/fase03' }}"
-          echo "tags=${{ steps.ecr.outputs.registry }}/${ECR_REPO}:${SHORT_SHA}" >> $GITHUB_OUTPUT
-          echo "sha_tag=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          REGISTRY="${{ steps.ecr.outputs.registry }}"
+          REPO="${{ vars.ECR_REPOSITORY_NAME || 'fcg/fase03-notification-lambda' }}"
+          echo "tags=${REGISTRY}/${REPO}:latest" >> $GITHUB_OUTPUT
+          echo "image_tag=latest" >> $GITHUB_OUTPUT
 
       - name: Build image
         run: docker build -f Dockerfile -t ${{ steps.meta.outputs.tags }} .
 
       - name: Push image
         run: docker push ${{ steps.meta.outputs.tags }}
-
-      - name: Push latest (production)
-        if: vars.ENVIRONMENT == 'prod'
-        run: |
-          docker tag ${{ steps.meta.outputs.tags }} ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_NAME || 'fcg/fase03' }}:latest
-          docker push ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_NAME || 'fcg/fase03' }}:latest
 
   trigger-orchestrator:
     name: Trigger infra orchestrator
