@@ -43,9 +43,9 @@ jobs:
         id: meta
         run: |
           REGISTRY="${{ steps.ecr.outputs.registry }}"
-          REPO="${{ vars.ECR_REPOSITORY_NAME || 'fcg/fase03-notification-lambda' }}"
+          REPO="${{ vars.ECR_REPOSITORY_NAME || 'fcg/fase03' }}"
           echo "tags=${REGISTRY}/${REPO}:latest" >> $GITHUB_OUTPUT
-          echo "image_tag=latest" >> $GITHUB_OUTPUT
+          echo "image_tag=notification-lambda:latest" >> $GITHUB_OUTPUT
 
       - name: Build image
         run: docker build -f Dockerfile -t ${{ steps.meta.outputs.tags }} .
