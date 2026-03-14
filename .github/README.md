@@ -7,4 +7,5 @@ Estes workflows são do **projeto Notification Lambda** e devem rodar quando est
 
 Se o repositório for um **monorepo**, o GitHub só executa workflows em `.github/workflows` na **raiz**. Copie estes arquivos para a raiz e ajuste os caminhos.
 
-Variables e secrets: ver documentação do `Fase3-InfraOrchestrador` ou `docs/CI-CD.md`.
+**Variables e secrets:** ver documentação do `Fase3-InfraOrchestrador` ou `docs/CI-CD.md`.  
+**Valores padrão ECR:** se não definir variables, usam-se `AWS_REGION=us-east-1` e `ECR_REPOSITORY_NAME=fcg/Fase03` (detalhes em `Fase3-UsersAPI/.github/workflows/README.md`).
