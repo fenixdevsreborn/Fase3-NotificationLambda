@@ -7,7 +7,7 @@ name: Publish image
 
 on:
   push:
-    branches: [main]
+    branches: [master]
 
 env:
   SERVICE_NAME: notification-lambda
@@ -44,8 +44,8 @@ jobs:
         run: |
           REGISTRY="${{ steps.ecr.outputs.registry }}"
           REPO="${{ vars.ECR_REPOSITORY_NAME || 'fcg/fase03' }}"
-          echo "tags=${REGISTRY}/${REPO}:latest" >> $GITHUB_OUTPUT
-          echo "image_tag=notification-lambda:latest" >> $GITHUB_OUTPUT
+          echo "tags=${REGISTRY}/${REPO}:notification-lambda-latest" >> $GITHUB_OUTPUT
+          echo "image_tag=notification-lambda:notification-lambda-latest" >> $GITHUB_OUTPUT
 
       - name: Build image
         run: docker build -f Dockerfile -t ${{ steps.meta.outputs.tags }} .
