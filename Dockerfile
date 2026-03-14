@@ -1,4 +1,4 @@
-# Build
+# Build — context = raiz do repositório do serviço.
 FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
 WORKDIR /src
 

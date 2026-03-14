@@ -12,6 +12,7 @@ on:
 env:
   SERVICE_NAME: notification-lambda
   DOTNET_VERSION: "10.0.x"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build-and-push:
@@ -42,7 +43,8 @@ jobs:
         id: meta
         run: |
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          echo "tags=${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_NAME }}:${SHORT_SHA}" >> $GITHUB_OUTPUT
+          ECR_REPO="${{ vars.ECR_REPOSITORY_NAME || env.SERVICE_NAME }}"
+          echo "tags=${{ steps.ecr.outputs.registry }}/${ECR_REPO}:${SHORT_SHA}" >> $GITHUB_OUTPUT
           echo "sha_tag=${SHORT_SHA}" >> $GITHUB_OUTPUT
 
       - name: Build image
@@ -54,8 +56,8 @@ jobs:
       - name: Push latest (production)
         if: vars.ENVIRONMENT == 'prod'
         run: |
-          docker tag ${{ steps.meta.outputs.tags }} ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_NAME }}:latest
-          docker push ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_NAME }}:latest
+          docker tag ${{ steps.meta.outputs.tags }} ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_NAME || env.SERVICE_NAME }}:latest
+          docker push ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_NAME || env.SERVICE_NAME }}:latest
 
   trigger-orchestrator:
     name: Trigger infra orchestrator
