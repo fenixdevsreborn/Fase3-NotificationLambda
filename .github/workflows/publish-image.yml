@@ -12,6 +12,7 @@ on:
 env:
   SERVICE_NAME: notification-lambda
   DOTNET_VERSION: "10.0.x"
+  # Mata o warning do Node 20 e força o uso do Node 24
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
@@ -44,14 +45,34 @@ jobs:
         run: |
           REGISTRY="${{ steps.ecr.outputs.registry }}"
           REPO="${{ vars.ECR_REPOSITORY_NAME || 'fcg/fase03' }}"
-          echo "tags=${REGISTRY}/${REPO}:notification-lambda-latest" >> $GITHUB_OUTPUT
-          echo "image_tag=notification-lambda:notification-lambda-latest" >> $GITHUB_OUTPUT
+          
+          # Definimos as tags que serão usadas
+          TAG_LATEST="${REGISTRY}/${REPO}:notification-lambda-latest"
+          TAG_SHA="${REGISTRY}/${REPO}:notification-lambda-${{ github.sha }}"
+          
+          echo "tags=${TAG_LATEST},${TAG_SHA}" >> $GITHUB_OUTPUT
+          echo "image_tag=notification-lambda-latest" >> $GITHUB_OUTPUT
+          echo "registry=${REGISTRY}" >> $GITHUB_OUTPUT
+          echo "repo=${REPO}" >> $GITHUB_OUTPUT
 
       - name: Build image
-        run: docker build -f Dockerfile -t ${{ steps.meta.outputs.tags }} .
+        run: |
+          # Buildando com múltiplas tags simultâneas
+          docker build -f Dockerfile \
+            -t ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_NAME || 'fcg/fase03' }}:notification-lambda-latest \
+            -t ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_NAME || 'fcg/fase03' }}:notification-lambda-${{ github.sha }} .
 
       - name: Push image
-        run: docker push ${{ steps.meta.outputs.tags }}
+        run: |
+          # Sobe todas as tags configuradas de uma vez
+          docker push ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_NAME || 'fcg/fase03' }} --all-tags
+
+      - name: Update Lambda Function
+        run: |
+          # O comando mestre que sincroniza o ECR com a sua Lambda
+          aws lambda update-function-code \
+            --function-name fenix-notification-lambda \
+            --image-uri ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_NAME || 'fcg/fase03' }}:notification-lambda-latest
 
   trigger-orchestrator:
     name: Trigger infra orchestrator
