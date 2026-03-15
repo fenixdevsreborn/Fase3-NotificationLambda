@@ -27,6 +27,9 @@ services.AddNotificationApplication();
 services.AddSingleton<Function>();
 
 var provider = services.BuildServiceProvider();
+
+OpenTelemetryLambdaExtensions.ConfigureOpenTelemetry();
+
 var handler = provider.GetRequiredService<Function>();
 var serializer = new DefaultLambdaJsonSerializer(options =>
 {
@@ -34,6 +37,9 @@ var serializer = new DefaultLambdaJsonSerializer(options =>
     options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
 });
 
-await LambdaBootstrapBuilder.Create<Amazon.Lambda.SQSEvents.SQSEvent, Amazon.Lambda.SQSEvents.SQSBatchResponse>(handler.HandleSqsAsync, serializer)
+async Task<Amazon.Lambda.SQSEvents.SQSBatchResponse> WrappedHandler(Amazon.Lambda.SQSEvents.SQSEvent evnt, Amazon.Lambda.Core.ILambdaContext ctx)
+    => await OpenTelemetryLambdaExtensions.TraceSqsHandlerAsync(handler.HandleSqsAsync, evnt, ctx).ConfigureAwait(false);
+
+await LambdaBootstrapBuilder.Create<Amazon.Lambda.SQSEvents.SQSEvent, Amazon.Lambda.SQSEvents.SQSBatchResponse>(WrappedHandler, serializer)
     .Build()
     .RunAsync();

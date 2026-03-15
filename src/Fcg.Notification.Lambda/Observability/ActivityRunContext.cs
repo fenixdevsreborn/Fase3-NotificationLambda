@@ -1,35 +1,32 @@
 using System.Diagnostics;
+using Fcg.Notification.Lambda.Telemetry;
 
 namespace Fcg.Notification.Lambda.Observability;
 
-/// <summary>Creates Activity from message trace/correlation (W3C). Use to continue trace from Payments API.</summary>
+/// <summary>Creates Activity from message trace/correlation (W3C). Uses LambdaActivitySource so spans are exported to X-Ray via OpenTelemetry.</summary>
 public static class ActivityRunContext
 {
     /// <summary>Starts an Activity as child of message trace (TraceId/SpanId). Sets correlation id tag. If traceId is null, starts a new trace.</summary>
-    public static Activity? StartActivityFromMessage(string? traceId, string? spanId, string? correlationId, string activityName = "process.message")
+    public static Activity? StartActivityFromMessage(string? traceId, string? spanId, string? correlationId, string activityName = "notification.handle")
     {
-        Activity? activity;
+        ActivityContext parentContext = default;
         if (!string.IsNullOrWhiteSpace(traceId))
         {
             try
             {
                 var tid = ActivityTraceId.CreateFromString(traceId.AsSpan());
                 var sid = string.IsNullOrWhiteSpace(spanId) ? default : ActivitySpanId.CreateFromString(spanId.AsSpan());
-                activity = new Activity(activityName).SetParentId(tid, sid, ActivityTraceFlags.None);
+                parentContext = new ActivityContext(tid, sid, ActivityTraceFlags.None);
             }
             catch (FormatException)
             {
-                activity = new Activity(activityName);
+                // fall through with default parentContext
             }
         }
-        else
-        {
-            activity = new Activity(activityName);
-        }
 
+        var activity = LambdaActivitySource.Instance.StartActivity(activityName, ActivityKind.Consumer, parentContext);
         if (activity != null && !string.IsNullOrWhiteSpace(correlationId))
             activity.SetTag(ObservabilityContext.CorrelationIdTag, correlationId);
-        activity?.Start();
         return activity;
     }
 

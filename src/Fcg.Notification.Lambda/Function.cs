@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text.Json;
 using Amazon.Lambda.Core;
@@ -77,7 +78,20 @@ public sealed class Function
                     null,
                     message.CorrelationId,
                     "notification.handle",
-                    () => _handler.HandleAsync(message, CancellationToken.None)).ConfigureAwait(false);
+                    async () =>
+                    {
+                        using (_logger.BeginScope(new Dictionary<string, object?>
+                        {
+                            [FcgLogPropertyNames.TraceId] = ObservabilityContext.GetCurrentTraceId() ?? "",
+                            [FcgLogPropertyNames.SpanId] = ObservabilityContext.GetCurrentSpanId() ?? "",
+                            [FcgLogPropertyNames.CorrelationId] = ObservabilityContext.GetCurrentCorrelationId() ?? "",
+                            [FcgLogPropertyNames.MessageId] = message.MessageId,
+                            [FcgLogPropertyNames.TemplateName] = message.TemplateName
+                        }))
+                        {
+                            return await _handler.HandleAsync(message, CancellationToken.None).ConfigureAwait(false);
+                        }
+                    }).ConfigureAwait(false);
             }
             catch (Exception ex)
             {

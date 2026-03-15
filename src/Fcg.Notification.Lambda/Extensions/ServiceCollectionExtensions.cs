@@ -7,7 +7,8 @@ namespace Fcg.Notification.Lambda.Extensions;
 /// <summary>DI extensions for Lambda observability and telemetry: FcgMeters, ActivitySource.</summary>
 public static class ServiceCollectionExtensions
 {
-    public const string DefaultMeterName = "Fcg.Notification.Lambda";
+    /// <summary>Nome do Meter (deve coincidir com OTEL_SERVICE_NAME / OpenTelemetryLambdaExtensions.ServiceName para métricas no CloudWatch).</summary>
+    public const string DefaultMeterName = LambdaActivitySource.Name;
 
     /// <summary>Adds FcgMeters and ActivitySource for Lambda. Call from Program.</summary>
     public static IServiceCollection AddLambdaObservability(this IServiceCollection services, string? meterName = null)
